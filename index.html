@@ -338,6 +338,28 @@ window.buildTabsets = function(tocID) {
 
 
 
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 
 
@@ -457,9 +479,10 @@ Robin</h4>
 <ul>
 <li><a href="#abstract"><span class="toc-section-number">1</span>
 Abstract</a></li>
-<li><a href="#session-information"><span class="toc-section-number">2</span> Session information</a></li>
-<li><a href="#references"><span class="toc-section-number">3</span>
-References</a></li>
+<li><a href="#introduction"><span class="toc-section-number">2</span>
+Introduction</a></li>
+<li><a href="#session-information"><span class="toc-section-number">3</span> Session information</a></li>
+<li><a href="#references">References</a></li>
 </ul>
 </div>
 
@@ -481,8 +504,120 @@ penalty, with a fused type lasso penalty. We solve this problem using an
 algorithm based on Nesterov’s smoothing, and present initial results on
 real data.</p>
 </div>
-<div id="session-information" class="section level1" number="2">
-<h1><span class="header-section-number">2</span> Session
+<div id="introduction" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Introduction</h1>
+<p>Probabilistic graphical models <span class="citation">(<a href="#ref-Lauritzen1996" role="doc-biblioref">Lauritzen
+1996</a>)</span> <span class="citation">(<a href="#ref-Koller2009" role="doc-biblioref">Koller and Friedman 2009</a>)</span> are widely
+used in high-dimensional data analysis, to synthesize the interaction
+between variables. In many applications such as genomics or image
+analysis, graphical models are used to reduce the number of parameters
+by selecting the most relevant interactions between variables.
+Undirected (GGMs) are a particular class of graphical models used in
+gaussian settings. In the context of high-dimensional statistics,
+graphical models are generally assumed , meaning that a small number of
+pairs of variables interact, compared to the total number of possible
+pairs. This assumption has been shown to provide both statistical and
+computational advantages, by simplifying the structure of dependence
+between variables <span class="citation">(<a href="#ref-Dempster1972" role="doc-biblioref">Dempster 1972</a>)</span> and allowing efficient
+algorithms <span class="citation">(<a href="#ref-Meinshausen2006" role="doc-biblioref">Meinshausen and Bühlmann 2006</a>)</span>. See for
+instance <span class="citation">(<a href="#ref-Fan2016" role="doc-biblioref">Fan, Liao, and Liu 2016</a>)</span> for a review of
+sparse graphical models inference methods.</p>
+<p>In GGMs, it is well known (see, e.g., <span class="citation">(<a href="#ref-Lauritzen1996" role="doc-biblioref">Lauritzen
+1996</a>)</span> that inferring the graphical model or equivalently the
+(CIG) boils down to inferring the support of the precision matrix <span class="math inline">\(\bOmega\)</span> (the inverse of the
+variance-covariance matrix). To do so, several <span class="math inline">\(\ell_1\)</span> penalized methods have been
+proposed in the literature to learn the CIG of GGMs. For instance, the
+approach for <span class="citation">(<a href="#ref-Meinshausen2006" role="doc-biblioref">Meinshausen and Bühlmann 2006</a>)</span> (MB)
+based on the least absolute shrinkage and selection operator (Lasso)
+<span class="citation">(<a href="#ref-tibshirani1996" role="doc-biblioref">Tibshirani 1996</a>)</span> is a popular method.
+Each variable is regressed on the others, taking advantage of the link
+between the so-obtained regression coefficients and partial
+correlations. More precisely, for all <span class="math inline">\(1 \le
+i \le p\)</span>, the following problem is solved: <span class="math display">\[\begin{equation}
+\label{eq:neighborhood}
+\hat{\bbeta^i}(\lambda) = \argmin_{\bbeta^i \in \R^{p-1}} \frac{1}{n}
+\normldeux{\bX^i - \bX^{\setminus i} \bbeta^i}^2 + \lambda
+\normlun{\bbeta^i}.
+\end{equation}\]</span> In <span class="math inline">\(\eqref{eq:neighborhood}\)</span>, <span class="math inline">\(\lambda\)</span> is a non negative regularization
+parameter and <span class="math inline">\(\bX^{\setminus i}\)</span>
+denotes the matrix <span class="math inline">\(\bX\)</span> deprived of
+column <span class="math inline">\(i.\)</span> The MB method defined by
+the estimation problem <span class="math inline">\(\eqref{eq:neighborhood}\)</span> has generated a
+long line of work in the field of nodewise regression methods. For
+instance, <span class="citation">(<a href="#ref-Rocha2008" role="doc-biblioref">Rocha, Zhao, and Yu 2008</a>)</span>, <span class="citation">(<a href="#ref-Ambroise2009" role="doc-biblioref">Ambroise, Chiquet, and Matias 2009</a>)</span>
+showed that nodewise regression can be seen as a pseudo-likelihood
+approximation, and <span class="citation">(<a href="#ref-Peng2009" role="doc-biblioref">Peng et al. 2009</a>)</span> extended the MB method
+to estimate sparse partial correlations using a single regression
+problem. Other inference methods similar to nodewise regression include
+<span class="citation">(<a href="#ref-Yuan2010" role="doc-biblioref">Yuan 2010</a>)</span> (based on selector) and <span class="citation">(<a href="#ref-Cai2011" role="doc-biblioref">Cai, Liu,
+and Luo 2011</a>)</span> ( estimator) among others.</p>
+<p>Another family of sparse CIG inference methods directly estimates
+<span class="math inline">\(\bOmega\)</span> via direct minimization of
+the <span class="math inline">\(\ell_1\)</span>-penalized negative
+log-likelihood <span class="citation">(<a href="#ref-Banerjee2008" role="doc-biblioref">Banerjee, El Ghaoui, and d’Aspremont
+2008</a>)</span>, without resorting to the auxiliary regression problem.
+This method called the <span class="citation">(<a href="#ref-Friedman2007" role="doc-biblioref">Friedman, Hastie, and
+Tibshirani 2007</a>)</span> benefits from many optimization algorithms
+<span class="citation">(<a href="#ref-Yuan2007" role="doc-biblioref">Yuan and Lin 2007</a>)</span>, <span class="citation">(<a href="#ref-Rothman2008" role="doc-biblioref">Rothman et al. 2008</a>)</span>, <span class="citation">(<a href="#ref-Banerjee2008" role="doc-biblioref">Banerjee, El Ghaoui, and d’Aspremont
+2008</a>)</span>, <span class="citation">(<a href="#ref-Hsieh2014" role="doc-biblioref">Hsieh et al. 2014</a>)</span>..</p>
+<p>Such inference methods are widely used and enjoy many favorable
+theoretical and empirical properties, including robustness to
+high-dimensional problems. However, some limitations have been observed,
+particularly in the presence of strongly correlated variables, caused by
+known impairments of Lasso-type regularization in this context <span class="citation">(<a href="#ref-Buhlmann2012" role="doc-biblioref">Bühlmann et al. 2012</a>)</span>, <span class="citation">(<a href="#ref-Park2007" role="doc-biblioref">Park,
+Hastie, and Tibshirani 2006</a>)</span>. To overcome this, in addition
+to sparsity, several previous works attempt to estimate CIG by
+integrating clustering structures among variables, for the sake of both
+statistical sanity and interpretability. A non exhaustive list of works
+that integrate a clustering structure to speed up or improve the
+estimation procedure includes <span class="citation">(<a href="#ref-Honorio2009" role="doc-biblioref">Honorio et al.
+2009</a>)</span>, <span class="citation">(<a href="#ref-Ambroise2009" role="doc-biblioref">Ambroise, Chiquet, and Matias 2009</a>)</span>,
+<span class="citation">(<a href="#ref-Mazumder2012" role="doc-biblioref">Mazumder and Hastie 2012</a>)</span>, <span class="citation">(<a href="#ref-Tan2013" role="doc-biblioref">Tan,
+Witten, and Shojaie 2013</a>)</span>, <span class="citation">(<a href="#ref-Yao2019" role="doc-biblioref">Yao and Allen 2019</a>)</span>,
+<span class="citation">(<a href="#ref-Devijver2018" role="doc-biblioref">Devijver and Gallopin 2018</a>)</span>.</p>
+<p>All the aforementioned methods exploit the group structure to
+simplify the graph inference problem, and infer the CIG between single
+variables. Another question that has received less attention is the
+inference of the CIG between the groups of variables; i.e. between
+representative of the group structure. A recent work that introduce
+inference of graphical models on multiple grouping levels is <span class="citation">(<a href="#ref-Cheng2017" role="doc-biblioref">Cheng,
+Shan, and Kim 2017</a>)</span>. They proposed to infer the CIG of gene
+data, on two levels which corresponds to genes and pathways
+respectively. Note that pathways are groups of functionally related
+genes, which are known in advance. This is achieved via the optimization
+of a penalized maximum likelihood which estimate a sparse network at
+both gene and group levels. Our work is also part of this dynamic. We
+introduce a penalty term allowing to build parsimonious networks at
+different levels of a hierarchical clustering. The main difference with
+the procedure of <span class="citation">(<a href="#ref-Cheng2017" role="doc-biblioref">Cheng, Shan, and Kim 2017</a>)</span> is that we do
+not require prior knowledge of the group structure, which makes the
+problem significantly more complex. In addition, our method has the
+advantage of proposing CIGs at more than two levels of granularity.</p>
+<p>We introduce the Multiscale Graphical Lasso (MGLasso), a novel method
+to estimate simultaneously a hierarchical clustering structure, and
+graphical models depicting the conditional independence structure
+between clusters of variables, at each level of the hierarchy. The
+procedure is based on a convex optimization problem with a hybrid
+penalty term combining a graphical Lasso and a group-fused Lasso
+penalty. In the spirit of convex hierarchical clustering, introduced by
+<span class="citation">(<a href="#ref-Hocking2011" role="doc-biblioref">Hocking et al. 2011</a>)</span>, <span class="citation">(<a href="#ref-Lindsten2011" role="doc-biblioref">Lindsten, Ohlsson, and Ljung 2011</a>)</span> the
+hierarchy is obtained by spanning the entire regularization path. At
+each level of the hierarchy, variables in same clusters are represented
+by a meta-variable; the new CIG is estimated between these new
+meta-variables which leads to a multiscale graphical model. Unlike <span class="citation">(<a href="#ref-Yao2019" role="doc-biblioref">Yao and
+Allen 2019</a>)</span>, who introduced convex clustering in GGMs, our
+approach is expected to produce sparse estimations, thanks to an
+additional <span class="math inline">\(\ell_1\)</span> penalty.</p>
+<p>The remainder of this paper is organized as follows. In section
+[Multiscale Graphical Lasso], we formally introduce the Multiscale
+Graphical Lasso based on a convex estimation problem, and an
+optimization algorithm based on the continuation of Nesterov’s smoothing
+technique <span class="citation">(<a href="#ref-hadjselem2018" role="doc-biblioref">Hadj-Selem et al. 2018</a>)</span>. Numerical
+results on simulated and real data are presented in section [Simulation
+experiments].</p>
+</div>
+<div id="session-information" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Session
 information</h1>
 <pre><code>## R version 4.1.0 (2021-05-18)
 ## Platform: x86_64-apple-darwin13.4.0 (64-bit)
@@ -503,8 +638,151 @@ information</h1>
 ##  [9] rmarkdown_2.11  knitr_1.37      stringr_1.4.0   xfun_0.29      
 ## [13] digest_0.6.29   rlang_0.4.12    evaluate_0.14</code></pre>
 </div>
-<div id="references" class="section level1" number="3">
-<h1><span class="header-section-number">3</span> References</h1>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Ambroise2009" class="csl-entry">
+Ambroise, Christophe, Julien Chiquet, and Catherine Matias. 2009.
+<span>“<span class="nocase">Inferring sparse gaussian graphical models
+with latent structure</span>.”</span> <em>Electronic Journal of
+Statistics</em> 3 (0): 205–38. <a href="https://doi.org/10.1214/08-EJS314">https://doi.org/10.1214/08-EJS314</a>.
+</div>
+<div id="ref-Banerjee2008" class="csl-entry">
+Banerjee, Onureena, Laurent El Ghaoui, and Alexandre d’Aspremont. 2008.
+<span>“Model Selection Through Sparse Maximum Likelihood Estimation for
+Multivariate Gaussian or Binary Data”</span> 9 (June): 485–516.
+</div>
+<div id="ref-Buhlmann2012" class="csl-entry">
+Bühlmann, Peter, Philipp Rütimann, Sara Van De Geer, and Cun-Hui Zhang.
+2012. <span>“<span class="nocase">Correlated variables in regression:
+clustering and sparse estimation</span>.”</span>
+</div>
+<div id="ref-Cai2011" class="csl-entry">
+Cai, Tony, Weidong Liu, and Xi Luo. 2011. <span>“A Constrained L1
+Minimization Approach to Sparse Precision Matrix Estimation.”</span>
+<em>Journal of the American Statistical Association</em> 106 (494):
+594–607. <a href="https://doi.org/10.1198/jasa.2011.tm10155">https://doi.org/10.1198/jasa.2011.tm10155</a>.
+</div>
+<div id="ref-Cheng2017" class="csl-entry">
+Cheng, Lulu, Liang Shan, and Inyoung Kim. 2017. <span>“<span class="nocase">Multilevel Gaussian graphical model for multilevel
+networks</span>.”</span> <em>Journal of Statistical Planning and
+Inference</em> 190 (November): 1–14. <a href="https://doi.org/10.1016/j.jspi.2017.05.003">https://doi.org/10.1016/j.jspi.2017.05.003</a>.
+</div>
+<div id="ref-Dempster1972" class="csl-entry">
+Dempster, A. P. 1972. <span>“<span>Covariance Selection</span>.”</span>
+<em>Biometrics</em> 28 (1): 157. <a href="https://doi.org/10.2307/2528966">https://doi.org/10.2307/2528966</a>.
+</div>
+<div id="ref-Devijver2018" class="csl-entry">
+Devijver, Emilie, and Mélina Gallopin. 2018. <span>“<span class="nocase">Block-Diagonal Covariance Selection for High-Dimensional
+Gaussian Graphical Models</span>.”</span> <em>Journal of the American
+Statistical Association</em> 113 (521): 306–14. <a href="https://doi.org/10.1080/01621459.2016.1247002">https://doi.org/10.1080/01621459.2016.1247002</a>.
+</div>
+<div id="ref-Fan2016" class="csl-entry">
+Fan, Jianqing, Yuan Liao, and Han Liu. 2016. <span>“An Overview of the
+Estimation of Large Covariance and Precision Matrices.”</span> <em>The
+Econometrics Journal</em> 19 (1): C1–32. https://doi.org/<a href="https://doi.org/10.1111/ectj.12061">https://doi.org/10.1111/ectj.12061</a>.
+</div>
+<div id="ref-Friedman2007" class="csl-entry">
+Friedman, Jerome, Trevor Hastie, and Robert Tibshirani. 2007.
+<span>“<span class="nocase">Sparse inverse covariance estimation with
+the graphical lasso</span>.”</span>
+</div>
+<div id="ref-hadjselem2018" class="csl-entry">
+Hadj-Selem, Fouad, Tommy Lofstedt, Elvis Dohmatob, Vincent Frouin,
+Mathieu Dubois, Vincent Guillemot, and Edouard Duchesnay. 2018.
+<span>“<span class="nocase">Continuation of Nesterov’s Smoothing for
+Regression with Structured Sparsity in High-Dimensional
+Neuroimaging</span>.”</span> <em><span>IEEE Transactions on Medical
+Imaging</span></em> 2018. <a href="https://doi.org/10.1109/TMI.2018.2829802">https://doi.org/10.1109/TMI.2018.2829802</a>.
+</div>
+<div id="ref-Hocking2011" class="csl-entry">
+Hocking, T., Jean-Philippe Vert, F. Bach, and Armand Joulin. 2011.
+<span>“Clusterpath: An Algorithm for Clustering Using Convex Fusion
+Penalties.”</span> In <em>ICML</em>.
+</div>
+<div id="ref-Honorio2009" class="csl-entry">
+Honorio, Jean, Dimitris Samaras, Nikos Paragios, Rita Goldstein, and
+Luis E Ortiz. 2009. <span>“Sparse and Locally Constant Gaussian
+Graphical Models.”</span> <em>Advances in Neural Information Processing
+Systems</em> 22: 745–53.
+</div>
+<div id="ref-Hsieh2014" class="csl-entry">
+Hsieh, Cho-Jui, Mátyás A. Sustik, Inderjit S. Dhillon, and Pradeep
+Ravikumar. 2014. <span>“QUIC: Quadratic Approximation for Sparse Inverse
+Covariance Estimation.”</span> <em>Journal of Machine Learning
+Research</em> 15 (83): 2911–47. <a href="http://jmlr.org/papers/v15/hsieh14a.html">http://jmlr.org/papers/v15/hsieh14a.html</a>.
+</div>
+<div id="ref-Koller2009" class="csl-entry">
+Koller, Daphne, and Nir Friedman. 2009. <span>“<span>Probabilistic
+Graphical Models: Principles</span>.”</span> <em>Italica</em> 51 (3):
+327. <a href="https://doi.org/10.2307/478142">https://doi.org/10.2307/478142</a>.
+</div>
+<div id="ref-Lauritzen1996" class="csl-entry">
+Lauritzen, Steffen L. 1996. <em><span class="nocase">Graphical
+models</span></em>. Clarendon Press. <a href="https://global.oup.com/academic/product/graphical-models-9780198522195?cc=fr&amp;lang=en&amp;">https://global.oup.com/academic/product/graphical-models-9780198522195?cc=fr&amp;lang=en&amp;</a>.
+</div>
+<div id="ref-Lindsten2011" class="csl-entry">
+Lindsten, F., H. Ohlsson, and L. Ljung. 2011. <span>“Clustering Using
+Sum-of-Norms Regularization: With Application to Particle Filter Output
+Computation.”</span> In <em>2011 IEEE Statistical Signal Processing
+Workshop (SSP)</em>, 201–4. <a href="https://doi.org/10.1109/SSP.2011.5967659">https://doi.org/10.1109/SSP.2011.5967659</a>.
+</div>
+<div id="ref-Mazumder2012" class="csl-entry">
+Mazumder, Rahul, and Trevor Hastie. 2012. <span>“<span class="nocase">The graphical lasso: New insights and
+alternatives</span>.”</span> <em>Electronic Journal of Statistics</em> 6
+(none): 2125–49. <a href="https://doi.org/10.1214/12-EJS740">https://doi.org/10.1214/12-EJS740</a>.
+</div>
+<div id="ref-Meinshausen2006" class="csl-entry">
+Meinshausen, Nicolai, and Peter Bühlmann. 2006. <span>“<span class="nocase">High-dimensional graphs and variable selection with the
+Lasso</span>.”</span> <em>Annals of Statistics</em> 34 (3): 1436–62. <a href="https://doi.org/10.1214/009053606000000281">https://doi.org/10.1214/009053606000000281</a>.
+</div>
+<div id="ref-Park2007" class="csl-entry">
+Park, Mee Young, Trevor Hastie, and Robert Tibshirani. 2006.
+<span>“<span class="nocase">Averaged gene expressions for
+regression</span>.”</span> <em>Biostatistics</em> 8 (2): 212–27. <a href="https://doi.org/10.1093/biostatistics/kxl002">https://doi.org/10.1093/biostatistics/kxl002</a>.
+</div>
+<div id="ref-Peng2009" class="csl-entry">
+Peng, Jie, Pei Wang, Nengfeng Zhou, and Ji Zhu. 2009. <span>“Partial
+Correlation Estimation by Joint Sparse Regression Models.”</span>
+<em>Journal of the American Statistical Association</em> 104 (486):
+735–46. <a href="https://doi.org/10.1198/jasa.2009.0126">https://doi.org/10.1198/jasa.2009.0126</a>.
+</div>
+<div id="ref-Rocha2008" class="csl-entry">
+Rocha, Guilherme V., Peng Zhao, and Bin Yu. 2008. <span>“A Path
+Following Algorithm for Sparse Pseudo-Likelihood Inverse Covariance
+Estimation (SPLICE).”</span>
+</div>
+<div id="ref-Rothman2008" class="csl-entry">
+Rothman, Adam J., Peter J. Bickel, Elizaveta Levina, and Ji Zhu. 2008.
+<span>“<span class="nocase">Sparse permutation invariant covariance
+estimation</span>.”</span> <em>Electronic Journal of Statistics</em> 2
+(none): 494–515. <a href="https://doi.org/10.1214/08-EJS176">https://doi.org/10.1214/08-EJS176</a>.
+</div>
+<div id="ref-Tan2013" class="csl-entry">
+Tan, Kean Ming, Daniela Witten, and Ali Shojaie. 2013. <span>“<span class="nocase">The Cluster Graphical Lasso for improved estimation of
+Gaussian graphical models</span>,”</span> July. <a href="http://arxiv.org/abs/1307.5339">http://arxiv.org/abs/1307.5339</a>.
+</div>
+<div id="ref-tibshirani1996" class="csl-entry">
+Tibshirani, R. 1996. <span>“Regression Shrinkage and Selection via the
+Lasso.”</span> <em>Journal of the Royal Statistical Society (Series
+B)</em> 58: 267–88.
+</div>
+<div id="ref-Yao2019" class="csl-entry">
+Yao, Tianyi, and Genevera I. Allen. 2019. <span>“Clustered Gaussian
+Graphical Model via Symmetric Convex Clustering.”</span> In <em>2019
+IEEE Data Science Workshop (DSW)</em>, 76–82. <a href="https://doi.org/10.1109/DSW.2019.8755774">https://doi.org/10.1109/DSW.2019.8755774</a>.
+</div>
+<div id="ref-Yuan2010" class="csl-entry">
+Yuan, Ming. 2010. <span>“High Dimensional Inverse Covariance Matrix
+Estimation via Linear Programming.”</span> <em>Journal of Machine
+Learning Research</em> 11 (79): 2261–86. <a href="http://jmlr.org/papers/v11/yuan10b.html">http://jmlr.org/papers/v11/yuan10b.html</a>.
+</div>
+<div id="ref-Yuan2007" class="csl-entry">
+Yuan, Ming, and Yi Lin. 2007. <span>“<span class="nocase">Model
+selection and estimation in the Gaussian graphical model</span>.”</span>
+<em>Biometrika</em> 94 (1): 19–35. <a href="https://doi.org/10.1093/biomet/asm018">https://doi.org/10.1093/biomet/asm018</a>.
+</div>
+</div>
 </div>
 
 
