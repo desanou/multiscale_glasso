@@ -481,7 +481,27 @@ Robin</h4>
 Abstract</a></li>
 <li><a href="#introduction"><span class="toc-section-number">2</span>
 Introduction</a></li>
-<li><a href="#session-information"><span class="toc-section-number">3</span> Session information</a></li>
+<li><a href="#multiscale-graphical-lasso"><span class="toc-section-number">3</span> Multiscale Graphical Lasso</a></li>
+<li><a href="#numerical-scheme"><span class="toc-section-number">4</span> Numerical scheme</a>
+<ul>
+<li><a href="#optimization-via-conesta-algorithm"><span class="toc-section-number">4.1</span> Optimization via CONESTA
+algorithm</a></li>
+<li><a href="#reformulation-of-mglasso-for-conesta-algorithm"><span class="toc-section-number">4.2</span> Reformulation of MGLasso for
+CONESTA algorithm</a></li>
+<li><a href="#model-selection"><span class="toc-section-number">4.3</span> Model selection</a></li>
+</ul></li>
+<li><a href="#simulation-experiments"><span class="toc-section-number">5</span> Simulation experiments</a>
+<ul>
+<li><a href="#synthetic-data-models"><span class="toc-section-number">5.1</span> Synthetic data models</a></li>
+<li><a href="#support-recovery"><span class="toc-section-number">5.2</span> Support recovery</a></li>
+<li><a href="#clustering"><span class="toc-section-number">5.3</span>
+Clustering</a></li>
+</ul></li>
+<li><a href="#analysis-of-microbial-associations-data"><span class="toc-section-number">6</span> Analysis of microbial associations
+data</a></li>
+<li><a href="#conclusion"><span class="toc-section-number">7</span>
+Conclusion</a></li>
+<li><a href="#session-information"><span class="toc-section-number">8</span> Session information</a></li>
 <li><a href="#references">References</a></li>
 </ul>
 </div>
@@ -608,16 +628,501 @@ meta-variables which leads to a multiscale graphical model. Unlike <span class="
 Allen 2019</a>)</span>, who introduced convex clustering in GGMs, our
 approach is expected to produce sparse estimations, thanks to an
 additional <span class="math inline">\(\ell_1\)</span> penalty.</p>
-<p>The remainder of this paper is organized as follows. In section
-[Multiscale Graphical Lasso], we formally introduce the Multiscale
-Graphical Lasso based on a convex estimation problem, and an
-optimization algorithm based on the continuation of Nesterov’s smoothing
-technique <span class="citation">(<a href="#ref-hadjselem2018" role="doc-biblioref">Hadj-Selem et al. 2018</a>)</span>. Numerical
-results on simulated and real data are presented in section [Simulation
-experiments].</p>
+<p>The remainder of this paper is organized as follows. In section <a href="#multiscale-graphical-lasso">Multiscale Graphical Lasso</a>, we
+formally introduce the Multiscale Graphical Lasso based on a convex
+estimation problem, and an optimization algorithm based on the
+continuation of Nesterov’s smoothing technique <span class="citation">(<a href="#ref-hadjselem2018" role="doc-biblioref">Hadj-Selem et al. 2018</a>)</span>. Numerical
+results on simulated and real data are presented in section <a href="#simulation-experiments">Simulation experiments</a>.</p>
 </div>
-<div id="session-information" class="section level1" number="3">
-<h1><span class="header-section-number">3</span> Session
+<div id="multiscale-graphical-lasso" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Multiscale Graphical
+Lasso</h1>
+<p>We introduce an original method for Multiscale Graphical model
+inference. The method aims at inferring a graphical Gaussian model while
+hierarchically grouping variables. It infers conditional independence
+between different groups of variables. The approach is based on
+neighborhood selection <span class="citation">(<a href="#ref-Meinshausen2006" role="doc-biblioref">Meinshausen and
+Bühlmann 2006</a>)</span> and considers an additional fused-Lasso type
+penalty for clustering. In the spirit of hierarchical convex clustering,
+the hierarchical structure is recovered by spanning the regularization
+path.</p>
+<p>Let <span class="math inline">\(X = (X^1, \hdots, X^p)^T \in \mathbb
+R^p\)</span> be a <span class="math inline">\(p\)</span>-dimensional
+Gaussian random vector, with mean vector <span class="math inline">\(\mu\)</span> and covariance matrix <span class="math inline">\(\mathbf \Sigma\)</span>. The conditional
+independence structure of <span class="math inline">\(X\)</span> is
+characterized by a graph <span class="math inline">\(G = (V,
+E)\)</span>, where <span class="math inline">\(V = \{1,\ldots
+p\}\)</span> is the set of variables and <span class="math inline">\(E\)</span> the set of edges, uniquely determined
+by the support of the precision matrix <span class="math inline">\(\bOmega = \bS^{-1}\)</span> (see, e.g., <span class="citation">(<a href="#ref-Dempster1972" role="doc-biblioref">Dempster 1972</a>)</span>). In other words, for any
+two vertices <span class="math inline">\(i,j\in V\)</span>, the edge
+<span class="math inline">\((i,j)\)</span> belongs to the set <span class="math inline">\(E\)</span> if and only if <span class="math inline">\(\Omega_{ij} \neq 0\)</span>, that is if and only
+if the <span class="math inline">\(i\)</span>-th and <span class="math inline">\(j\)</span>-th variables are conditionally
+independent given all the others i.e. <span class="math inline">\(X^i
+\perp \!\!\! \perp X^j |X^{\setminus (i, j)}\)</span> where <span class="math inline">\(X^{\setminus (i, j)}\)</span> is the set of all
+<span class="math inline">\(p\)</span> variables deprived of variables
+<span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>.</p>
+<p>Considering the linear model <span class="math inline">\(X^i =
+\sum_{j\neq i} \beta^i_j X_j + \epsilon_i\)</span> where <span class="math inline">\(\epsilon_i\)</span> is a Gaussian centered random
+variable, we have <span class="math inline">\(\beta^i_j =
+-\frac{\Omega_{ij}}{\Omega_{ii}}\)</span>. We define the regression
+matrix <span class="math inline">\(\bbeta := [{\bbeta^1}^T, \ldots,
+{\bbeta^p}^T]^T \in \R^{p \times (p-1)}\)</span>, whose rows are the
+regression vectors for each of the <span class="math inline">\(p\)</span> regressions.</p>
+<p>Let the <span class="math inline">\(n \times p\)</span>-dimensional
+matrix <span class="math inline">\(\bX\)</span> contain <span class="math inline">\(n\)</span> independent observations of <span class="math inline">\(X\)</span>. We propose to minimize the following
+criterion which combines Lasso and group-fused Lasso penalties: <span class="math display">\[\begin{equation}
+\label{eq:cost-fct}
+J_{\lambda_1, \lambda_2}(\bbeta; \bX ) = \frac{1}{2} \sum_{i=1}^p
+\normldeux{\bX^i - \bX^{\setminus i} \bbeta^i}^2  + \lambda_1 \sum_{i =
+1}^p  \normlun{\bbeta^i} + \lambda_2 \sum_{i &lt; j} \normldeux{\bbeta^i
+- \tau_{ij}(\bbeta^j)},
+\end{equation}\]</span> where <span class="math inline">\(\tau_{ij}\)</span> is a permutation exchanging the
+coefficients <span class="math inline">\(\bbeta^j_j\)</span> and <span class="math inline">\(\bbeta^j_i\)</span> and leaves other coefficients
+untouched, <span class="math inline">\(\bX^{i}\in \R^n\)</span> denotes
+the <span class="math inline">\(i\)</span>-th column of <span class="math inline">\(\bX\)</span>, <span class="math inline">\(\bbeta_{i}\)</span> denotes the <span class="math inline">\(i\)</span>-th row of <span class="math inline">\(\beta\)</span>, <span class="math inline">\(\lambda_1\)</span> and <span class="math inline">\(\lambda_2\)</span> are penalization parameters.
+Let us consider <span class="math display">\[\hat{\bbeta} \in
+\argmin_{\bbeta} J_{\lambda_1, \lambda_2}(\bbeta, \bX).\]</span></p>
+<p>The lasso penalty term encourages sparsity and the penalty term <span class="math inline">\(\normldeux{\bbeta^i -
+\tau_{ij}(\bbeta^j)}\)</span> encourages to fuse regression vectors
+<span class="math inline">\(\bbeta^i\)</span> and <span class="math inline">\(\bbeta^j\)</span>. These fusions uncover a
+clustering structure. The model is likely to cluster together variables
+that have the same conditional effects on the others. Variables <span class="math inline">\(X^i\)</span> and <span class="math inline">\(X^j\)</span> are assigned to the same cluster when
+<span class="math inline">\(\bbeta^i = \tau_{ij}(\bbeta^j).\)</span></p>
+<p>Let us illustrate by an example the effect of the proposed approach.
+If we consider a group of <span class="math inline">\(q\)</span>
+variables whose regression vectors have at least <span class="math inline">\(q\)</span> non-zero coefficients and further
+assume that for each pair of group variables <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>, <span class="math inline">\(\|\bbeta^i
+- \tau_{ij}(\bbeta^j)\|_2=0\)</span>. After some permutations, we get a
+<span class="math inline">\(q\times q\)</span> block of non-zeros
+coefficient <span class="math inline">\(\beta_{ij}\)</span>
+corresponding to the group in the <span class="math inline">\(\bbeta\)</span> matrix, where <span class="math inline">\((i,j)\in \{1,\cdots, q\}^2\)</span>. If we
+consider three different indices <span class="math inline">\(i,j,k \ \in
+\{1,\cdots, q\}^3\)</span>, it is straightforward to show that the six
+coefficients indexed by <span class="math inline">\((i,j,k)\)</span> are
+all equal. Thus the distance constraints between vectors <span class="math inline">\(\bbeta^i\)</span> of a group forces equality of
+all regression coefficients in the group.</p>
+<p>The greater the regularization weight <span class="math inline">\(\lambda_2\)</span>, the larger groups become. This
+is the core principle of the convex relaxation of hierarchical
+clustering introduced by <span class="citation">(<a href="#ref-Hocking2011" role="doc-biblioref">Hocking et al.
+2011</a>)</span>. Hence, we can derive a hierarchical clustering
+structure by spanning the regularization path obtained by varying <span class="math inline">\(\lambda_2\)</span> while <span class="math inline">\(\lambda_1\)</span> is fixed. The addition of a
+fused-type term in the inference of graphical models has been studied
+previously by authors such as <span class="citation">(<a href="#ref-Honorio2009" role="doc-biblioref">Honorio et al.
+2009</a>)</span>, <span class="citation">(<a href="#ref-ganguly2014" role="doc-biblioref">Ganguly and Polonik 2014</a>)</span>, <span class="citation">(<a href="#ref-Grechkin2015" role="doc-biblioref">Grechkin et al. 2015</a>)</span>. However these
+existing methods require prior knowledge on the neighborhood of each
+variable. On the contrary, our approach allows simultaneous inference of
+a multi-level graphical model and a hierarchical clustering of the
+variables.</p>
+<p>In practice, if some information about the clustering structure is
+available, the problem can be generalized into: <span class="math display">\[\begin{equation}
+\label{eq:cost-fct-general}
+\min_{\bbeta} \sum_{i=1}^p\frac{1}{2} \normldeux{\bX^i - \bX^{\setminus
+i} \bbeta^i}^2  + \lambda_1 \sum_{i = 1}^p \normlun{\bbeta^i} +
+\lambda_2 \sum_{i &lt; j}  w_{ij} \normldeux{\bbeta^i -
+\tau_{ij}(\bbeta^j)},
+\end{equation}\]</span> where <span class="math inline">\(w_{ij}\)</span> is a positive weight encoding
+prior knowledge of the groups to which variables <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span> belong to. In the remainder of the
+paper, we will consider <span class="math inline">\(w_{ij} =
+1.\)</span></p>
+</div>
+<div id="numerical-scheme" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Numerical scheme</h1>
+<p>This section introduces a complete numerical scheme to apply MGLasso
+in practice, using a convex optimization algorithm and a model selection
+procedure. Section <a href="#optimization-via-conesta-algorithm">Optimization via CONESTA
+algorithm</a> reviews the principles of the Continuation with Nesterov
+smoothing in a shrinkage-thresholding algorithm (CONESTA), the
+optimization algorithm used in practice to solve MGLasso. Section <a href="#reformulation-of-mglasso-for-conesta-algorithm">Reformulation of
+MGLasso for CONESTA algorithm</a> details a reformulation of MGLasso
+which enables us to apply CONESTA. Finally Section <a href="#model-selection">Model selection</a> presents the model selection
+procedure employed in practice to select the regularization
+parameters.</p>
+<div id="optimization-via-conesta-algorithm" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> Optimization via
+CONESTA algorithm</h2>
+<p>The optimization problem for Multiscale Graphical Lasso is convex,
+but not straightforward to solve using classical algorithms because of
+the fused-lasso type penalty which is non separable and admits no
+closed-form solution for the proximal gradient. We solve it using the
+Continuation with Nesterov smoothing in a shrinkage-thresholding
+algorithm (CONESTA, <span class="citation">(<a href="#ref-hadjselem2018" role="doc-biblioref">Hadj-Selem et al. 2018</a>)</span>), dedicated to
+high dimensional regression problems with structured sparsity such as
+group structures.</p>
+<p>The CONESTA solver, originally introduced for neuroimaging problems,
+addresses a general class of convex optimization problems which includes
+group-wise penalties, admitting loss functions of the form <span class="math display">\[
+\label{eq:conesta-criterion}
+f(\btheta ) = g(\btheta) + \lambda_1 h(\btheta) + \lambda_2 s(\btheta),
+\]</span> where <span class="math inline">\(\lambda_1\)</span> and <span class="math inline">\(\lambda_2\)</span> are penalty weights, and <span class="math inline">\(\btheta\in \mathbb{R}^d\)</span> is a <span class="math inline">\(d\)</span>-dimensional vector of parameters to
+optimize. In the original paper, the function <span class="math inline">\(g(\btheta)\)</span> is the sum of a least squares
+criterion and a ridge penalty, <span class="math inline">\(h(\btheta)\)</span> is a penalty whose proximal
+operator is known in closed-form, and <span class="math inline">\(s(\btheta)\)</span> is an <span class="math inline">\(\ell_{1,2}\)</span> penalty of the form <span class="math display">\[
+s(\btheta) = \sum_{\phi \in \Phi} \|\bD_\phi \btheta_\phi\|_2.
+\]</span> In the definition of <span class="math inline">\(s(\btheta)\)</span>, <span class="math inline">\(\Phi = \{ \phi_1, \hdots,
+\phi_{\Card(\Phi)}\}\)</span> is a set of subsets of indices, i.e.,
+<span class="math inline">\(\Phi_i\subset \{1,\ldots, d\}\)</span> for
+all <span class="math inline">\(i\in\{1,\ldots,\Card(\Phi)\}\)</span>
+and, for all <span class="math inline">\(\phi\in \Phi\)</span>, <span class="math inline">\(\btheta_\phi\)</span> is the sub-vector of <span class="math inline">\(\btheta\)</span> defined by <span class="math inline">\(\btheta_\phi = (\theta_i)_{i\in\phi}\)</span>.
+Finally, <span class="math inline">\(\bD_\phi\)</span> are linear
+operators. The main ingredient of CONESTA is the approximation of the
+non-smooth <span class="math inline">\(\ell_{2,1}\)</span>-norm penalty
+with unknown proximal gradient, by a smooth function with known proximal
+gradient computed using Nesterov’s smoothing. Given a smoothing
+parameter <span class="math inline">\(\mu&gt;0\)</span>, define the
+smooth approximation <span class="math display">\[ s_{\mu}(\btheta) =
+\max_{\balpha \in \mathcal{K}} \left \{ \balpha^T \bD \btheta -
+\frac{\mu}{2} \| \balpha \|_2^2 \right \},\]</span> where <span class="math inline">\(\mathcal{K}\)</span> is the <span class="math inline">\(\ell_2\)</span> unit ball. Note that <span class="math inline">\(\lim_{\mu \rightarrow 0} s_{\mu}(\btheta) =
+s(\btheta).\)</span> An accelerated proximal gradient algorithm (FISTA
+<span class="citation">(<a href="#ref-Beck2009" role="doc-biblioref">Beck and Teboulle 2009</a>)</span>) step can then
+be applied after computing the gradient of the smooth part of the
+approximated criterion which is given by <span class="math inline">\(g(\btheta) + s_{\mu}(\btheta).\)</span> At each
+iteration, the smoothing parameter <span class="math inline">\(\mu\)</span> is updated dynamically using the
+duality gap, and a new approximation is computed. The CONESTA algorithm
+enjoys a linear convergence rate, and was shown empirically to
+outperform other computational options for structured-sparsity problems
+such as ADMM and inexact FISTA in terms of convergence speed <span class="citation">(<a href="#ref-hadjselem2018" role="doc-biblioref">Hadj-Selem et al. 2018</a>)</span>.</p>
+</div>
+<div id="reformulation-of-mglasso-for-conesta-algorithm" class="section level2" number="4.2">
+<h2><span class="header-section-number">4.2</span> Reformulation of
+MGLasso for CONESTA algorithm</h2>
+<p>To apply CONESTA, it is necessary to reformulate the MGLasso problem
+in order to comply with the form of loss function required by CONESTA.
+The objective of MGLasso can indeed be written as <span class="math display">\[\begin{equation}
+\label{eq:reformulated-pbm}
+\argmin \frac{1}{2} ||\bY - \tilde{\bX} \tilde{\bbeta}||_2^2 + \lambda_1
+||\tilde{\bbeta}||_1 + \lambda_2 \sum_{i&lt;j} ||\bm A_{ij}
+\tilde{\bbeta}||_2,
+\end{equation}\]</span> where <span class="math inline">\(\bY =
+\operatorname{Vec}(\bX) \in \R^{np}, \tilde{\bbeta} =
+\operatorname{Vec(\bbeta)} \in \R^{p (p-1)}, \tilde{\bX}\)</span> is a
+<span class="math inline">\(\R^{[np]\times [p \times (p-1)]}\)</span>
+block-diagonal matrix with <span class="math inline">\(\bX^{\setminus
+i}\)</span> on the <span class="math inline">\(i\)</span>-th block. The
+matrix <span class="math inline">\(\bm A_{ij}\)</span> is a <span class="math inline">\(p\times p(p-1)\)</span> matrix defined by <span class="math display">\[
+\bm A_{ij} (k, l) = \begin{cases}
+1, \ \text{if} \ l =(i-1)p+k, \\
+-1, \ \text{if} \ l = (j-1)p+k,\\
+0, \ \text{otherwise.}
+\end{cases}
+\]</span> Note that we introduce this notation for simplicity of
+exposition but, in practice, the sparsity of the matrices <span class="math inline">\(A_{ij}\)</span> allows a much more efficient
+implementation. Based on reformulation <span class="math inline">\(\eqref{eq:reformulated-pbm}\)</span>, we may apply
+CONESTA to solve the objective of MGLasso for fixed <span class="math inline">\(\lambda_1\)</span> and <span class="math inline">\(\lambda_2\)</span>. The procedure is applied, for
+fixed <span class="math inline">\(\lambda_1\)</span>, to a range of
+decreasing values of <span class="math inline">\(\lambda_2\)</span>, in
+order to obtain a hierarchical clustering. The corresponding pseudo-code
+is given in Algorithm <span class="math inline">\(\ref{alg:hierarchical_clustering}\)</span>.</p>
+</div>
+<div id="model-selection" class="section level2" number="4.3">
+<h2><span class="header-section-number">4.3</span> Model selection</h2>
+<p>An crucial question for practical applications is the definition of a
+rule to select the penalty parameters (<span class="math inline">\(\lambda_1, \lambda_2\)</span>). This selection
+problem operates at two levels: <span class="math inline">\(\lambda_1\)</span> controls the sparsity of the
+graphical model, and <span class="math inline">\(\lambda_2\)</span>
+controls the number of clusters in the optimal clustering partition.
+These two parameters are dealt with separately: the sparsity parameter
+<span class="math inline">\(\lambda_1\)</span> is chosen via model
+selection, while the clustering parameter <span class="math inline">\(\lambda_2\)</span> varies across a grid of values,
+in order to obtain graphs with different levels of granularity. The
+problem of model selection in graphical models is difficult in the high
+dimensional case where the number of samples is small compared to the
+number of variables, as classical AIC and BIC criteria tend to perform
+poorly <span class="citation">(<a href="#ref-Liu2010" role="doc-biblioref">Liu, Roeder, and Wasserman 2010</a>)</span>.
+Different criteria have been proposed in the literature, such as
+cross-validation <span class="citation">(<a href="#ref-bien2011sparse" role="doc-biblioref">Bien and Tibshirani 2011</a>)</span>, GGMSelect
+<span class="citation">(<a href="#ref-giraud2012graph" role="doc-biblioref">Giraud, Huet, and Verzelen 2012</a>)</span>,
+stability selection <span class="citation">(<a href="#ref-meinshausen2010stability" role="doc-biblioref">Meinshausen
+and Bühlmann 2010</a>)</span> <span class="citation">(<a href="#ref-Liu2010" role="doc-biblioref">Liu, Roeder, and Wasserman
+2010</a>)</span>, Extended Bayesian Information Criterion (EBIC) <span class="citation">(<a href="#ref-foygel2010extended" role="doc-biblioref">Foygel and Drton 2010</a>)</span>, and Rotation
+Information Criterion <span class="citation">(<a href="#ref-zhao2012huge" role="doc-biblioref">Zhao et al.
+2012</a>)</span>.</p>
+<p>In this paper, we focused on the StARS stability selection approach
+proposed by <span class="citation">(<a href="#ref-Liu2010" role="doc-biblioref">Liu, Roeder, and Wasserman 2010</a>)</span>. The
+method uses <span class="math inline">\(k\)</span> subsamples of data to
+estimate the associated graphs for a given range of <span class="math inline">\(\lambda_1\)</span> values. For each value, a
+global instability of the graph edges is computed. The optimal value of
+<span class="math inline">\(\lambda_1\)</span> is chosen so as to
+minimize the instability, as follows. Let <span class="math inline">\(\lambda^{(1)}_1, \hdots, \lambda_1^{(K)}\)</span>
+be a grid of sparsity regularization parameters, and <span class="math inline">\(S_1, \hdots, S_N\)</span> be <span class="math inline">\(N\)</span> bootstrap samples obtained by sampling
+the rows of the data set <span class="math inline">\(\bX\)</span>. For
+each <span class="math inline">\(k\in\{1,\ldots,K\}\)</span> and for
+each <span class="math inline">\(j\in\{1,\ldots, N\}\)</span>, we denote
+by <span class="math inline">\(\mathcal{A}^{k,j}(\bX)\)</span> the
+adjacency matrix of the estimated graph obtained by applying the
+neighborhood selection algorithm (MB) to <span class="math inline">\(S_n\)</span> with regularization parameter <span class="math inline">\(\lambda_1^{(k)}\)</span>. For each possible edge
+<span class="math inline">\((s,t)\in\{1,\ldots,p\}^2\)</span>, the
+probability of edge appearance is estimated empirically by <span class="math display">\[\hat \theta_{st}^{(k)} = \frac{1}{N} \sum_{j=1}^N
+\mathcal{A}^{k,j}_{st}.\]</span> Define <span class="math display">\[\hat \xi_{st}(\Lambda) = 2 \hat \theta_{st}
+(\Lambda) \left ( 1 - \hat \theta_{st} (\Lambda) \right )\]</span> the
+empirical instability of edge <span class="math inline">\((s,t)\)</span>
+(that is, twice the variance of the Bernoulli indicator of edge <span class="math inline">\((s,t)\)</span>). The instability level associated
+to <span class="math inline">\(\lambda_1^{(k)}\)</span> is given by
+<span class="math display">\[
+\hat D(\lambda_1^{(k)}) = \frac{\sum_{s&lt;t} \hat
+\xi_{st}(\lambda_1^{(k)})}{C^2_p},
+\]</span> StARS selects the optimal penalty parameter as follows <span class="math display">\[
+\hat \lambda = \max_k\left\{ \lambda_1^{(k)}: \hat D(\lambda_1^{(k)})
+\le \beta, k\in\{1,\ldots,K\} \right \},
+\]</span> where <span class="math inline">\(\beta\)</span> is the
+threshold chosen for the instability level.</p>
+</div>
+</div>
+<div id="simulation-experiments" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Simulation
+experiments</h1>
+<p>In this section, a simulation study is conducted to evaluate the
+performance of the MGLasso method in terms of clustering and support
+recovery. Receiver Operating Characteristic (ROC) curves are used to
+evaluate the adequacy of the inferred graphs with the reality for the
+MGLasso and GLasso methods in the Erdös-Renyi, Scale-free and Stochastic
+Block Models frameworks. The Adjusted Rand indices are used to compare
+the partitions of MGLasso, hierarchical agglomerative clustering and
+K-means clustering in a stochastic block model framework.</p>
+<div id="synthetic-data-models" class="section level2" number="5.1">
+<h2><span class="header-section-number">5.1</span> Synthetic data
+models</h2>
+<p>We consider three different synthetic network models: the Stochastic
+Block Model (SBM), the Erdös-Renyi model and the Scale-Free model. In
+each case, Gaussian data is generated by drawing <span class="math inline">\(n\)</span> independent realizations of a
+multivariate Gaussian distribution <span class="math inline">\(\mathcal
+N(0, \bSigma)\)</span> where <span class="math inline">\(\bSigma \in
+\R^{p \times p}\)</span> and <span class="math inline">\(\bOmega =
+\bSigma ^{-1}\)</span>. The support of <span class="math inline">\(\bOmega\)</span>, equivalent to the network
+adjacency matrix, is generated from the three different models. The
+difficulty level of the problem is controlled by varying the ratio <span class="math inline">\(\frac{n}{p}\)</span> with <span class="math inline">\(p\)</span> fixed at <span class="math inline">\(40\)</span>: <span class="math inline">\(\frac{n}{p}\in \{0.5,1,2\}\)</span>.</p>
+<div id="stochastic-block-model" class="section level3" number="5.1.1">
+<h3><span class="header-section-number">5.1.1</span> Stochastic
+Block-Model :</h3>
+<p>We construct a block-diagonal precision matrix <span class="math inline">\(\bOmega\)</span> as follows. First, we generate
+the support of <span class="math inline">\(\bOmega\)</span> as shown in
+figure <span class="math inline">\(\ref{fig:graph_sbm}\)</span>, denoted
+by <span class="math inline">\(\bm A\in\{0,1\}^{p\times p}\)</span>. To
+do this, the variables are first partitioned into <span class="math inline">\(K = 5\)</span> hidden groups, noted <span class="math inline">\(C_1, \hdots, C_K\)</span> described by a latent
+random variable <span class="math inline">\(Z_i\)</span>, such that
+<span class="math inline">\(Z_i = k\)</span> if <span class="math inline">\(i = C_k\)</span>. <span class="math inline">\(Z_i\)</span> follows a multinomial distribution
+<span class="math display">\[ P(Z_i = k) = \pi_k, \quad \forall k \in
+\{1, \hdots, K\},\]</span> where <span class="math inline">\(\pi =
+(\pi_1, \hdots, \pi_k)\)</span> is the vector of proportions of clusters
+whose sum is equal to <span class="math inline">\(1\)</span>. The set of
+latent variables is noted <span class="math inline">\(\bZ = \{ Z_1,
+\hdots, Z_K\}\)</span>. Conditionally to <span class="math inline">\(\bZ\)</span>, <span class="math inline">\(A_{ij}\)</span> follows a Bernoulli distribution
+such that <span class="math display">\[A_{ij}|Z_i = k, Z_j = l \sim
+\mathcal{B}(\alpha_{kl}), \quad \forall k,l \in \{1 \hdots,
+K\},\]</span> where <span class="math inline">\(\alpha_{kl}\)</span> is
+the probability of inter-cluster connectivity, with <span class="math inline">\(\alpha_{kl} = 0.01\)</span> if <span class="math inline">\(k\neq l\)</span> and <span class="math inline">\(\alpha_{ll} = 0,75\)</span>. For <span class="math inline">\(k\in\{1,\ldots, K\}\)</span>, we define <span class="math inline">\(p_k = \sum_{i=1}^p \mathbbm{1}_{\{Z_i =
+k\}}\)</span>. The precision matrix <span class="math inline">\(\bOmega\)</span> of the graph is then calculated
+as follows. We define <span class="math inline">\(\Omega_{ij} =
+0\)</span> if <span class="math inline">\(Z_i\neq Z_j\)</span> ;
+otherwise, we define <span class="math inline">\(\Omega_{ij} =
+A_{ij}\omega_{ij}\)</span> where, for all <span class="math inline">\(i\in\{1,\ldots,p\}\)</span> and for all <span class="math inline">\(j\in\{1,\ldots,p| Z_j = Z_i\}\)</span>, <span class="math inline">\(\omega_{ij}\)</span> is given by :</p>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+&amp;\omega_{ii} :=
+\frac{1+\rho(p_{Z_i}-2)}{1+\rho(p_{Z_i}-2)-\rho^2(p_{Z_i}-1)};\\
+&amp;\omega_{ij} := \frac{-\rho}{1+\rho(p_{Z_i}-2)-\rho^2(p_{Z_i}-1)}.
+\end{aligned}
+\end{equation}\]</span> Constructing <span class="math inline">\(\bOmega\)</span> in this way makes it possible to
+control approximately the level of correlation between the variables in
+each block, which is equal to <span class="math inline">\(\rho\)</span>.</p>
+</div>
+<div id="erdös-renyi-model" class="section level3" number="5.1.2">
+<h3><span class="header-section-number">5.1.2</span> Erdös-Renyi Model
+:</h3>
+<p>The Erdös-Renyi model is a special case of the stochastic block model
+where <span class="math inline">\(\alpha_{kl} = \alpha_{ll} =
+\alpha\)</span> is constant. We set the density <span class="math inline">\(\alpha\)</span> of the graph to <span class="math inline">\(0.1\)</span>; see Figure <span class="math inline">\(\ref{fig:graph_erdos}\)</span> for an example of
+the graph resulting from this model.</p>
+</div>
+<div id="scale-free-model" class="section level3" number="5.1.3">
+<h3><span class="header-section-number">5.1.3</span> Scale-free Model
+:</h3>
+<p>The Scale-free Model generates networks whose degree distributions
+follow a power law. The graph starts with an initial chain graph of
+<span class="math inline">\(2\)</span> nodes. Then, new nodes are added
+to the graph one by one. Each new node is connected to an existing node
+with a probability proportional to the degree of the existing node. We
+set the number of edges in the graph to <span class="math inline">\(40\)</span>. An example of scale-free graph is
+shown in Figure <span class="math inline">\(\ref{fig:graph_scale_free}\)</span>.</p>
+</div>
+</div>
+<div id="support-recovery" class="section level2" number="5.2">
+<h2><span class="header-section-number">5.2</span> Support recovery</h2>
+<p>We compare the network structure learning performance of our approach
+to that of GLasso in its neighborhood selection version using ROC
+curves. In both GLasso and MGLasso, the sparsity is controlled by a
+regularization parameter <span class="math inline">\(\lambda_1\)</span>;
+however, MGLasso admits an additional regularization parameter, <span class="math inline">\(\lambda_2\)</span>, which controls the strength of
+convex clustering. To compare the two methods, in each ROC curve, the
+parameter <span class="math inline">\(\lambda_1\)</span> varies while
+the parameter <span class="math inline">\(\lambda_2\)</span> (for
+MGLasso) is kept constant. We computed ROC curves for <span class="math inline">\(4\)</span> different levels of penalty for the
+<span class="math inline">\(\lambda_2\)</span> parameter; since GLasso
+does not depend on <span class="math inline">\(\lambda_2\)</span> the
+GLasso ROC curves are simply replicated.</p>
+<p>In a decision rule associated with a sparsity penalty level <span class="math inline">\(\lambda_1\)</span>, we recall the definition of
+the two following functions. The sensitivity, also called the true
+positive rate or recall, is given by : <span class="math display">\[\begin{align*}
+\lambda_1 &amp;\mapsto \text{sensitivity}(\lambda_1) =
+\frac{TP(\lambda_1)}{TP(\lambda_1) + FN(\lambda_1)}.
+\end{align*}\]</span> Specificity, also called true negative rate or
+selectivity, is defined as follows: <span class="math display">\[\begin{align*}
+\lambda_1 &amp;\mapsto \text{specificity}(\lambda_1) =
+\frac{TN(\lambda_1)}{TN(\lambda_1) + FP(\lambda_1)}.
+\end{align*}\]</span> The ROC curve with the parameter <span class="math inline">\(\lambda_1\)</span> represents <span class="math inline">\(\text{sensitivity}(\lambda_1)\)</span> as a
+function of <span class="math inline">\(1 -
+\text{specificity}(\lambda_1)\)</span> which is the false positive
+rate.</p>
+<p>For each configuration (<span class="math inline">\(n, p\)</span>
+fixed), we generate <span class="math inline">\(50\)</span> replications
+and their associated ROC curves, which are then averaged. The average
+ROC curves for the three models are given in figures <span class="math inline">\(\ref{fig:roc_erdos}\)</span>, <span class="math inline">\(\ref{fig:roc_scale_free}\)</span>, <span class="math inline">\(\ref{fig:roc_sbm}\)</span> by varying <span class="math inline">\(\frac{n}{p}\in \{0.5,1,2\}\)</span>.</p>
+<p>Based on these empirical results, we first observe that, in all the
+considered simulation models, MGLasso improves over GLasso in terms of
+support recovert in the high-dimensional setting where <span class="math inline">\(p&lt;n\)</span>. In addition, in the absence of a
+total variation penalty, i.e. <span class="math inline">\(\lambda_2 =
+0\)</span>, MGLasso performs no worse than GLasso in each of the <span class="math inline">\(3\)</span> models. However, for <span class="math inline">\(\lambda_2&gt;0\)</span>, increasing the amount of
+penalty value does not seem to significantly improve the support
+recovery performances for the MGLasso, as we observe similar results for
+<span class="math inline">\(\lambda_2=3.3,6.6,10\)</span>. Preliminary
+analyses seem to show that, as <span class="math inline">\(\lambda_2\)</span> increases, the estimates of the
+regression vectors are shrinked towards <span class="math inline">\(0\)</span>. This shrinkage effect of group-fused
+penalty terms was also observed in <span class="citation">(<a href="#ref-chu2021adaptive" role="doc-biblioref">Chu et al.
+2021</a>)</span>.</p>
+</div>
+<div id="clustering" class="section level2" number="5.3">
+<h2><span class="header-section-number">5.3</span> Clustering</h2>
+<p>In order to obtain clustering performance, we compared the partitions
+estimated by MGLasso, Hierarchical Agglomerative Clustering (HAC) with
+Ward’s distance and K-means to the true partition in a stochastic block
+model framework. Euclidean distances between variables are used for HAC
+and K-means. The criterion used for the comparison is the adjusted Rand
+index. We studied the influence of the correlation level inside clusters
+on the clustering performances through two different parameters: <span class="math inline">\(\rho \in \{ 0.1, 0.3 \}\)</span>; the vector of
+cluster proportions is fixed at <span class="math inline">\(\mathbf \pi
+= (1/5, \hdots, 1/5)\)</span>. We then simulate <span class="math inline">\(100\)</span> Gaussian data sets for each
+simulation configuration (<span class="math inline">\(\rho\)</span>,
+<span class="math inline">\(n/p\)</span> fixed).The optimal sparsity
+penalty for MGLasso is chosen by the Stability Approach to
+Regularization Selection (StARS) method <span class="citation">(<a href="#ref-Liu2010" role="doc-biblioref">Liu, Roeder, and Wasserman
+2010</a>)</span> and we vary the parameter <span class="math inline">\(\lambda_2.\)</span></p>
+<p>The results shown in the figures <span class="math inline">\(\ref{fig:graph_rand_sbm_095}\)</span>, <span class="math inline">\(\ref{fig:graph_rand_sbm_025}\)</span> demonstrate
+that, particularly at the lower to medium levels of the hierarchy
+(between 20 and 10 clustes), the hierarchical clustering structure
+uncovered by MGLasso is comparable to popular clustering methods used in
+practice. For the higher levels (5 clusters), the performances of
+MGLasso deteriorate. As expected, the three compared methods also
+deteriorate as the level of correlation inside clusters decreases.</p>
+</div>
+</div>
+<div id="analysis-of-microbial-associations-data" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Analysis of microbial
+associations data</h1>
+<p>We finally illustrate our new method of inferring the multiscale
+Gaussian graphical model, with an application to the analysis of
+microbial associations in the American Gut project. The data used are
+count data that have been previously normalised by applying the
+log-centered ratio technique as used in <span class="citation">(<a href="#ref-Kurtz2015" role="doc-biblioref">Kurtz 2015</a>)</span>. After
+some filtering steps <span class="citation">(<a href="#ref-Kurtz2015" role="doc-biblioref">Kurtz 2015</a>)</span> on the operational taxonomic
+units OTUs counts (removed if present in less than <span class="math inline">\(37\%\)</span> of the samples) and the samples
+(removed if sequencing depth below 2700), the top OTUs are grouped in a
+dataset composed of <span class="math inline">\(n_1 = 289\)</span> for
+<span class="math inline">\(127\)</span> OTUs. As a preliminary
+analysis, we perform a hierarchical agglomerative clustering (HAC) on
+the OTUs, which allows to identify 4 major groups. The correlation
+matrix of the dataset is given in figure <span class="math inline">\(\ref{fig:cor_gut_data_order_hac}\)</span>; the
+variables have been rearranged according to the HAC partition.</p>
+<p>The average correlations within blocks composed of variables
+belonging to the same cluster are given below. We observe relatively
+high levels of correlation in small blocks, which is similar to the
+simulation models used to evaluate the performance of clustering in the
+Simulation Experiments section.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Clusters</th>
+<th align="center">1</th>
+<th align="center">2</th>
+<th align="center">3</th>
+<th align="center">4</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Mean correlation</td>
+<td align="center">0.0127</td>
+<td align="center">0.815</td>
+<td align="center">0.555</td>
+<td align="center">0.566</td>
+</tr>
+</tbody>
+</table>
+<p>We apply MGLasso to the normalised counts, in order to infer a graph
+as well as a clustering structure. The graphs obtained by MGLasso for
+<span class="math inline">\(\lambda_2 = 0\)</span> and for <span class="math inline">\(\lambda_2 = 5\)</span> (corresponding respectively
+127 and 80 clusters) are given below. In each case, the <span class="math inline">\(\lambda_1\)</span> parameter is chosen by
+stability selection (see Model Selection section).</p>
+<p>The variables were reordered according to the clustering partition
+obtained from the distances between the regression vectors, as described
+in the model section. Increasing <span class="math inline">\(\lambda_2\)</span> reduces the number of clusters
+and leads to a shrinking effect on the estimates. The adjacency matrix
+of the neighborhood selection equivalent to setting <span class="math inline">\(lambda_2\)</span> to <span class="math inline">\(0\)</span> is given in figure <span class="math inline">\(\ref{fig:mglasso_tv0}\)</span>. In figure <span class="math inline">\(\ref{fig:mglasso_full_graph_tv5}\)</span>, the
+deduced partition is composed of <span class="math inline">\(80\)</span>
+clusters. A confusion matrix comparing the egdes deduced by MGLasso with
+<span class="math inline">\(\lambda_2 = 5\)</span> and neighborhood
+selection is given below. The addition of a total variation parameter
+increases the merging effect, resulting in a larger number of edges in
+the graph.</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th></th>
+<th align="center">Neighborhood selection</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>MGLasso (<span class="math inline">\(\lambda_2 = 5\)</span>)</td>
+<td></td>
+<td align="center">non-edges</td>
+<td>edges</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>non-edges</td>
+<td align="center">15678</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>edges</td>
+<td align="center">288</td>
+<td>163</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="conclusion" class="section level1" number="7">
+<h1><span class="header-section-number">7</span> Conclusion</h1>
+<p>We proposed a new technique which combines Gaussian Graphical Model
+inference and hierarchical clustering called MGLasso. The method
+proceeds via convex optimization, and minimizes the neighborhood
+selection objective penalized by a hrybrid regularization combining a
+sparsity inducing norm and a convex clustering penalty. We developped a
+complete numerical scheme to apply MGLasso in practice, with an
+optimization algorithm based on CONESTA, as well as a model selection
+procedure. Our simulations results over synthetic and real datasets
+showed that MGLasso can perform better than GLasso in network support
+recovery in the presence of groups of correlated variables, and we
+illustrated the method with the analysis of microbial associations data.
+The present work paves the way for future improvements. First, by
+enabling incorporation of prior knowledge through more flexible weighted
+regularization. Second, by studying the theoretical properties of the
+method in terms of statistical guarantees for the MGLasso estimator.</p>
+</div>
+<div id="session-information" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> Session
 information</h1>
 <pre><code>## R version 4.1.0 (2021-05-18)
 ## Platform: x86_64-apple-darwin13.4.0 (64-bit)
@@ -652,6 +1157,15 @@ Banerjee, Onureena, Laurent El Ghaoui, and Alexandre d’Aspremont. 2008.
 <span>“Model Selection Through Sparse Maximum Likelihood Estimation for
 Multivariate Gaussian or Binary Data”</span> 9 (June): 485–516.
 </div>
+<div id="ref-Beck2009" class="csl-entry">
+Beck, Amir, and Marc Teboulle. 2009. <span>“A Fast Iterative
+Shrinkage-Thresholding Algorithm for Linear Inverse Problems.”</span>
+<em>SIAM J. Imaging Sciences</em> 2 (January): 183–202. <a href="https://doi.org/10.1137/080716542">https://doi.org/10.1137/080716542</a>.
+</div>
+<div id="ref-bien2011sparse" class="csl-entry">
+Bien, Jacob, and Robert J Tibshirani. 2011. <span>“Sparse Estimation of
+a Covariance Matrix.”</span> <em>Biometrika</em> 98 (4): 807–20.
+</div>
 <div id="ref-Buhlmann2012" class="csl-entry">
 Bühlmann, Peter, Philipp Rütimann, Sara Van De Geer, and Cun-Hui Zhang.
 2012. <span>“<span class="nocase">Correlated variables in regression:
@@ -668,6 +1182,12 @@ Cheng, Lulu, Liang Shan, and Inyoung Kim. 2017. <span>“<span class="nocase">Mu
 networks</span>.”</span> <em>Journal of Statistical Planning and
 Inference</em> 190 (November): 1–14. <a href="https://doi.org/10.1016/j.jspi.2017.05.003">https://doi.org/10.1016/j.jspi.2017.05.003</a>.
 </div>
+<div id="ref-chu2021adaptive" class="csl-entry">
+Chu, Shuyu, Huijing Jiang, Zhengliang Xue, and Xinwei Deng. 2021.
+<span>“Adaptive Convex Clustering of Generalized Linear Models with
+Application in Purchase Likelihood Prediction.”</span>
+<em>Technometrics</em> 63 (2): 171–83.
+</div>
 <div id="ref-Dempster1972" class="csl-entry">
 Dempster, A. P. 1972. <span>“<span>Covariance Selection</span>.”</span>
 <em>Biometrics</em> 28 (1): 157. <a href="https://doi.org/10.2307/2528966">https://doi.org/10.2307/2528966</a>.
@@ -682,10 +1202,30 @@ Fan, Jianqing, Yuan Liao, and Han Liu. 2016. <span>“An Overview of the
 Estimation of Large Covariance and Precision Matrices.”</span> <em>The
 Econometrics Journal</em> 19 (1): C1–32. https://doi.org/<a href="https://doi.org/10.1111/ectj.12061">https://doi.org/10.1111/ectj.12061</a>.
 </div>
+<div id="ref-foygel2010extended" class="csl-entry">
+Foygel, Rina, and Mathias Drton. 2010. <span>“Extended Bayesian
+Information Criteria for Gaussian Graphical Models.”</span> <em>arXiv
+Preprint arXiv:1011.6640</em>.
+</div>
 <div id="ref-Friedman2007" class="csl-entry">
 Friedman, Jerome, Trevor Hastie, and Robert Tibshirani. 2007.
 <span>“<span class="nocase">Sparse inverse covariance estimation with
 the graphical lasso</span>.”</span>
+</div>
+<div id="ref-ganguly2014" class="csl-entry">
+Ganguly, Apratim, and Wolfgang Polonik. 2014. <span>“Local Neighborhood
+Fusion in Locally Constant Gaussian Graphical Models.”</span> <a href="https://arxiv.org/abs/1410.8766">https://arxiv.org/abs/1410.8766</a>.
+</div>
+<div id="ref-giraud2012graph" class="csl-entry">
+Giraud, Christophe, Sylvie Huet, and Nicolas Verzelen. 2012.
+<span>“Graph Selection with GGMselect.”</span> <em>Statistical
+Applications in Genetics and Molecular Biology</em> 11 (3).
+</div>
+<div id="ref-Grechkin2015" class="csl-entry">
+Grechkin, Maxim, Maryam Fazel, Daniela Witten, and Su-In Lee. 2015.
+<span>“Pathway Graphical Lasso.”</span> In <em>Proceedings of the
+Twenty-Ninth AAAI Conference on Artificial Intelligence</em>, 2617–23.
+AAAI’15. Austin, Texas: AAAI Press.
 </div>
 <div id="ref-hadjselem2018" class="csl-entry">
 Hadj-Selem, Fouad, Tommy Lofstedt, Elvis Dohmatob, Vincent Frouin,
@@ -717,6 +1257,12 @@ Koller, Daphne, and Nir Friedman. 2009. <span>“<span>Probabilistic
 Graphical Models: Principles</span>.”</span> <em>Italica</em> 51 (3):
 327. <a href="https://doi.org/10.2307/478142">https://doi.org/10.2307/478142</a>.
 </div>
+<div id="ref-Kurtz2015" class="csl-entry">
+Kurtz, Christian L. AND Miraldi, Zachary D. AND Müller. 2015.
+<span>“Sparse and Compositionally Robust Inference of Microbial
+Ecological Networks.”</span> <em>PLOS Computational Biology</em> 11
+(May): 1–25. <a href="https://doi.org/10.1371/journal.pcbi.1004226">https://doi.org/10.1371/journal.pcbi.1004226</a>.
+</div>
 <div id="ref-Lauritzen1996" class="csl-entry">
 Lauritzen, Steffen L. 1996. <em><span class="nocase">Graphical
 models</span></em>. Clarendon Press. <a href="https://global.oup.com/academic/product/graphical-models-9780198522195?cc=fr&amp;lang=en&amp;">https://global.oup.com/academic/product/graphical-models-9780198522195?cc=fr&amp;lang=en&amp;</a>.
@@ -727,6 +1273,12 @@ Sum-of-Norms Regularization: With Application to Particle Filter Output
 Computation.”</span> In <em>2011 IEEE Statistical Signal Processing
 Workshop (SSP)</em>, 201–4. <a href="https://doi.org/10.1109/SSP.2011.5967659">https://doi.org/10.1109/SSP.2011.5967659</a>.
 </div>
+<div id="ref-Liu2010" class="csl-entry">
+Liu, Han, Kathryn Roeder, and Larry Wasserman. 2010. <span>“<a href="https://www.ncbi.nlm.nih.gov/pubmed/25152607"><span class="nocase">Stability approach to regularization selection (StARS)
+for high dimensional graphical models</span></a>.”</span> <em>Advances
+in Neural Information Processing Systems 23: 24th Annual Conference on
+Neural Information Processing Systems 2010, NIPS 2010</em>, 1–14.
+</div>
 <div id="ref-Mazumder2012" class="csl-entry">
 Mazumder, Rahul, and Trevor Hastie. 2012. <span>“<span class="nocase">The graphical lasso: New insights and
 alternatives</span>.”</span> <em>Electronic Journal of Statistics</em> 6
@@ -735,6 +1287,11 @@ alternatives</span>.”</span> <em>Electronic Journal of Statistics</em> 6
 <div id="ref-Meinshausen2006" class="csl-entry">
 Meinshausen, Nicolai, and Peter Bühlmann. 2006. <span>“<span class="nocase">High-dimensional graphs and variable selection with the
 Lasso</span>.”</span> <em>Annals of Statistics</em> 34 (3): 1436–62. <a href="https://doi.org/10.1214/009053606000000281">https://doi.org/10.1214/009053606000000281</a>.
+</div>
+<div id="ref-meinshausen2010stability" class="csl-entry">
+———. 2010. <span>“Stability Selection.”</span> <em>Journal of the Royal
+Statistical Society: Series B (Statistical Methodology)</em> 72 (4):
+417–73.
 </div>
 <div id="ref-Park2007" class="csl-entry">
 Park, Mee Young, Trevor Hastie, and Robert Tibshirani. 2006.
@@ -781,6 +1338,12 @@ Learning Research</em> 11 (79): 2261–86. <a href="http://jmlr.org/papers/v11/y
 Yuan, Ming, and Yi Lin. 2007. <span>“<span class="nocase">Model
 selection and estimation in the Gaussian graphical model</span>.”</span>
 <em>Biometrika</em> 94 (1): 19–35. <a href="https://doi.org/10.1093/biomet/asm018">https://doi.org/10.1093/biomet/asm018</a>.
+</div>
+<div id="ref-zhao2012huge" class="csl-entry">
+Zhao, Tuo, Han Liu, Kathryn Roeder, John Lafferty, and Larry Wasserman.
+2012. <span>“The Huge Package for High-Dimensional Undirected Graph
+Estimation in r.”</span> <em>The Journal of Machine Learning
+Research</em> 13 (1): 1059–62.
 </div>
 </div>
 </div>
