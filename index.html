@@ -246,6 +246,14 @@ window.buildTabsets = function(tocID) {
 };
 
 </script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+    equationNumbers: { autoNumber: "AMS" } 
+    
+  }
+});
+</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -465,34 +473,33 @@ Results on real data and synthetic are presented.</p>
 synthesize the interaction between variables. In many applications such
 as genomics or image analysis, graphical models are used to reduce the
 number of parameters by selecting the most relevant interactions between
-variables. Undirected (GGMs) are a particular class of graphical models
-used in Gaussian settings. In the context of high-dimensional
-statistics, graphical models are generally assumed , meaning that a
-small number of pairs of variables interact, compared to the total
-number of possible pairs. This assumption has been shown to provide both
-statistical and computational advantages, by simplifying the structure
-of dependence between variables <span class="citation">(<a href="#ref-Dempster1972" role="doc-biblioref">Dempster 1972</a>)</span>
-and allowing efficient algorithms <span class="citation">(<a href="#ref-Meinshausen2006" role="doc-biblioref">Meinshausen and
-Bühlmann 2006</a>)</span>. See for instance <span class="citation">Fan,
-Liao, and Liu (<a href="#ref-Fan2016" role="doc-biblioref">2016</a>)</span> for a review of sparse graphical
-models inference methods.</p>
+variables. Undirected Gaussian Graphical Models (GGMs) are a particular
+class of graphical models used in Gaussian settings. In the context of
+high-dimensional statistics, graphical models are generally assumed
+sparse, meaning that a small number of pairs of variables interact,
+compared to the total number of possible pairs. This assumption has been
+shown to provide both statistical and computational advantages, by
+simplifying the structure of dependence between variables <span class="citation">(<a href="#ref-Dempster1972" role="doc-biblioref">Dempster 1972</a>)</span> and allowing efficient
+algorithms <span class="citation">(<a href="#ref-Meinshausen2006" role="doc-biblioref">Meinshausen and Bühlmann 2006</a>)</span>. See for
+instance <span class="citation">Fan, Liao, and Liu (<a href="#ref-Fan2016" role="doc-biblioref">2016</a>)</span> for a review
+of sparse graphical models inference methods.</p>
 <p>In GGMs, it is well known (see, e.g., <span class="citation">Lauritzen (<a href="#ref-Lauritzen1996" role="doc-biblioref">1996</a>)</span>) that inferring the graphical
-model or equivalently the (CIG) boils down to inferring the support of
-the precision matrix <span class="math inline">\(\mathbf{\Omega}\)</span> (the inverse of the
+model or equivalently the Conditional Independence Graph (CIG) boils
+down to inferring the support of the precision matrix <span class="math inline">\(\mathbf{\Omega}\)</span> (the inverse of the
 variance-covariance matrix). To do so, several <span class="math inline">\(\ell_1\)</span> penalized methods have been
 proposed in the literature to learn the CIG of GGMs. For instance, the
-approach for <span class="citation">(<a href="#ref-Meinshausen2006" role="doc-biblioref">Meinshausen and Bühlmann 2006</a>)</span> (MB)
+nodewise regression approach for neighborhood selection <span class="citation">(<a href="#ref-Meinshausen2006" role="doc-biblioref">Meinshausen and Bühlmann 2006</a>)</span> (MB)
 based on the least absolute shrinkage and selection operator (Lasso)
 <span class="citation">(<a href="#ref-tibshirani1996" role="doc-biblioref">Tibshirani 1996</a>)</span> is a popular method.
 Each variable is regressed on the others, taking advantage of the link
 between the so-obtained regression coefficients and partial
 correlations. More precisely, for all <span class="math inline">\(1 \le
 i \le p\)</span>, the following problem is solved: <span class="math display">\[\begin{equation}
-\label{eq:neighborhood}
 \hat{\boldsymbol{\beta}^i}(\lambda) = \underset{\boldsymbol{\beta}^i \in
 \mathbb{R}^{p-1}}{\operatorname{argmin}} \frac{1}{n} \left \lVert
 \mathbf{X}^i - \mathbf{X}^{\setminus i} \boldsymbol{\beta}^i \right
 \rVert_2 ^2 + \lambda \left \lVert \boldsymbol{\beta}^i \right \rVert_1.
+\label{eq:neighborhood}
 \end{equation}\]</span> In <span class="math inline">\(\eqref{eq:neighborhood}\)</span>, <span class="math inline">\(\lambda\)</span> is a non negative regularization
 parameter and <span class="math inline">\(\mathbf{X}^{\setminus
 i}\)</span> denotes the matrix <span class="math inline">\(\mathbf{X}\)</span> deprived of column <span class="math inline">\(i.\)</span> The MB method defined by the
@@ -503,14 +510,15 @@ that nodewise regression can be seen as a pseudo-likelihood
 approximation, and <span class="citation">Peng et al. (<a href="#ref-Peng2009" role="doc-biblioref">2009</a>)</span> extended the
 MB method to estimate sparse partial correlations using a single
 regression problem. Other inference methods similar to nodewise
-regression include <span class="citation">(<a href="#ref-Yuan2010" role="doc-biblioref">Yuan 2010</a>)</span> (based on selector) and <span class="citation">(<a href="#ref-Cai2011" role="doc-biblioref">Cai, Liu,
-and Luo 2011</a>)</span> ( estimator) among others.</p>
+regression include <span class="citation">(<a href="#ref-Yuan2010" role="doc-biblioref">Yuan 2010</a>)</span> (based on Dantzig selector)
+and <span class="citation">(<a href="#ref-Cai2011" role="doc-biblioref">Cai, Liu, and Luo 2011</a>)</span> (Clime
+estimator) among others.</p>
 <p>Another family of sparse CIG inference methods directly estimates
 <span class="math inline">\(\mathbf{\Omega}\)</span> via direct
 minimization of the <span class="math inline">\(\ell_1\)</span>-penalized negative log-likelihood
 <span class="citation">(<a href="#ref-Banerjee2008" role="doc-biblioref">Banerjee, El Ghaoui, and d’Aspremont
 2008</a>)</span>, without resorting to the auxiliary regression problem.
-This method called the <span class="citation">(<a href="#ref-Friedman2007" role="doc-biblioref">Friedman, Hastie, and
+This method called the graphical lasso <span class="citation">(<a href="#ref-Friedman2007" role="doc-biblioref">Friedman, Hastie, and
 Tibshirani 2007</a>)</span> benefits from many optimization algorithms
 <span class="citation">(<a href="#ref-Yuan2007" role="doc-biblioref">Yuan and Lin 2007</a>; <a href="#ref-Rothman2008" role="doc-biblioref">Rothman et al. 2008</a>; <a href="#ref-Banerjee2008" role="doc-biblioref">Banerjee, El Ghaoui, and
 d’Aspremont 2008</a>; <a href="#ref-Hsieh2014" role="doc-biblioref">Hsieh et al. 2014</a>)</span>.</p>
@@ -531,20 +539,21 @@ Witten, and Shojaie 2013</a>)</span>, <span class="citation">(<a href="#ref-Yao2
 simplify the graph inference problem, and infer the CIG between single
 variables. Another question that has received less attention is the
 inference of the CIG between the groups of variables; i.e. between
-representative of the group structure. A recent work that introduce
-inference of graphical models on multiple grouping levels is <span class="citation">(<a href="#ref-Cheng2017" role="doc-biblioref">Cheng,
-Shan, and Kim 2017</a>)</span>. They proposed to infer the CIG of gene
-data, on two levels which corresponds to genes and pathways
-respectively. Note that pathways are groups of functionally related
-genes, which are known in advance. This is achieved via the optimization
-of a penalized maximum likelihood which estimate a sparse network at
-both gene and group levels. Our work is also part of this dynamic. We
-introduce a penalty term allowing to build parsimonious networks at
-different levels of a hierarchical clustering. The main difference with
-the procedure of <span class="citation">(<a href="#ref-Cheng2017" role="doc-biblioref">Cheng, Shan, and Kim 2017</a>)</span> is that we do
-not require prior knowledge of the group structure, which makes the
-problem significantly more complex. In addition, our method has the
-advantage of proposing CIGs at more than two levels of granularity.</p>
+meta-variables representative of the group structure. A recent work that
+introduce inference of graphical models on multiple grouping levels is
+<span class="citation">(<a href="#ref-Cheng2017" role="doc-biblioref">Cheng, Shan, and Kim 2017</a>)</span>. They
+proposed to infer the CIG of gene data, on two levels which corresponds
+to genes and pathways respectively. Note that pathways are groups of
+functionally related genes, which are known in advance. This is achieved
+via the optimization of a penalized maximum likelihood which estimate a
+sparse network at both gene and group levels. Our work is also part of
+this dynamic. We introduce a penalty term allowing to build parsimonious
+networks at different levels of a hierarchical clustering. The main
+difference with the procedure of <span class="citation">(<a href="#ref-Cheng2017" role="doc-biblioref">Cheng, Shan, and Kim
+2017</a>)</span> is that we do not require prior knowledge of the group
+structure, which makes the problem significantly more complex. In
+addition, our method has the advantage of proposing CIGs at more than
+two levels of granularity.</p>
 <p>We introduce the Multiscale Graphical Lasso (MGLasso), a novel method
 to estimate simultaneously a hierarchical clustering structure, and
 graphical models depicting the conditional independence structure
@@ -758,7 +767,34 @@ CONESTA to solve the objective of MGLasso for fixed <span class="math inline">\(
 fixed <span class="math inline">\(\lambda_1\)</span>, to a range of
 decreasing values of <span class="math inline">\(\lambda_2\)</span>, in
 order to obtain a hierarchical clustering. The corresponding pseudo-code
-is given in Algorithm <span class="math inline">\(\ref{alg:hierarchical_clustering}\)</span>.</p>
+is given in the following algorithm:</p>
+<blockquote>
+<p><span class="math inline">\(\textbf{Input}\)</span> : data <span class="math inline">\(\mathbf{X} \in \mathbb R^{n\times p}\)</span>,
+<span class="math inline">\(\lambda_1\)</span>, starting value <span class="math inline">\(\lambda_2\)</span>}, step <span class="math inline">\(\kappa &gt; 1\)</span><br />
+<span class="math inline">\(\operatorname{clusters} \leftarrow \left
+\{\{1\}, \dots, \{p\}\right \}\)</span><br />
+<span class="math inline">\(\boldsymbol{\beta}^i \leftarrow
+(\mathbf{X}^i)^{+}\mathbf{X}^i\)</span></p>
+<p><span class="math inline">\(\textbf{While}
+\operatorname{Card}(\operatorname{clusters}) \ge 2\)</span>:<br />
+<span class="math inline">\(\quad\)</span> <span class="math inline">\(\boldsymbol{\beta} \leftarrow CONESTA(\mathbf{X},
+\boldsymbol A, \lambda_1, \lambda_2)\)</span><br />
+<span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\textbf{For} ~ i\gets 1 ~ \textbf{to} ~
+p\)</span><br />
+<span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\textbf{For} ~ j\gets i ~ \textbf{to} ~
+p\)</span><br />
+<span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\textbf{If}
+\operatorname{dist}(\boldsymbol{\beta}^i, \boldsymbol{\beta}^j) &lt;
+\epsilon_{fuse}\)</span><br />
+<span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\quad\)</span> <span class="math inline">\(\operatorname{clusters}_i =
+\operatorname{clusters}_j\)</span><br />
+<span class="math inline">\(\quad\)</span> <span class="math inline">\(\textbf{Update }
+\operatorname{clusters}\)</span><br />
+<span class="math inline">\(\quad\)</span> <span class="math inline">\(\lambda_2 \leftarrow \lambda_2 \times
+\kappa\)</span>;</p>
+<p><span class="math inline">\(\textbf{Return} ~ \boldsymbol{\beta} ~
+\forall (\lambda_1, \lambda_2)\)</span></p>
+</blockquote>
 </div>
 <div id="model-selection" class="section level2" number="4.3">
 <h2><span class="header-section-number">4.3</span> Model selection</h2>
